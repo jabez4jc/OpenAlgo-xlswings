@@ -82,7 +82,8 @@ def format_for_excel(data: Any, headers: Optional[List[str]] = None) -> List[Lis
                             # Convert Unix timestamp to IST
                             dt = datetime.fromtimestamp(value)
                             value = dt.strftime('%Y-%m-%d %H:%M:%S')
-                        except:
+                        except (ValueError, TypeError, OSError):
+                            # Keep original value if timestamp conversion fails
                             pass
                     row.append(str(value))
                 rows.append(row)
@@ -260,7 +261,7 @@ def oa_history(symbol: str, exchange: str, interval: str, start_date: str, end_d
             dt = datetime.fromtimestamp(timestamp)
             date_str = dt.strftime('%Y-%m-%d')
             time_str = dt.strftime('%H:%M:%S')
-        except:
+        except (ValueError, TypeError, OSError):
             date_str = "N/A"
             time_str = "N/A"
         
@@ -376,7 +377,8 @@ def oa_orderbook() -> List[List[str]]:
             try:
                 dt = datetime.fromtimestamp(timestamp)
                 timestamp = dt.strftime('%Y-%m-%d %H:%M:%S')
-            except:
+            except (ValueError, TypeError, OSError):
+                # Keep original timestamp if conversion fails
                 pass
         
         row = [
@@ -431,7 +433,8 @@ def oa_tradebook() -> List[List[str]]:
             try:
                 dt = datetime.fromtimestamp(timestamp)
                 timestamp = dt.strftime('%Y-%m-%d %H:%M:%S')
-            except:
+            except (ValueError, TypeError, OSError):
+                # Keep original timestamp if conversion fails
                 pass
         
         row = [
@@ -712,7 +715,8 @@ def oa_orderstatus(strategy: str, order_id: str) -> List[List[str]]:
             try:
                 dt = datetime.fromtimestamp(value)
                 value = dt.strftime('%Y-%m-%d %H:%M:%S')
-            except:
+            except (ValueError, TypeError, OSError):
+                # Keep original value if timestamp conversion fails
                 pass
         result.append([str(key), str(value)])
     
@@ -1032,7 +1036,8 @@ def setup_dashboard(book: xw.Book):
         try:
             sheet = book.sheets["Dashboard"]
             sheet.clear()
-        except:
+        except (KeyError, AttributeError):
+            # Sheet doesn't exist, create new one
             sheet = book.sheets.add("Dashboard")
         
         sheet["A1"].value = "OpenAlgo Trading Dashboard"
@@ -1107,4 +1112,3 @@ def oa_get_config() -> List[List[str]]:
         ["Version", OpenAlgoConfig.version],
         ["Host URL", OpenAlgoConfig.host_url]
     ]
-EOF < /dev/null
