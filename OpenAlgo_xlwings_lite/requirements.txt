@@ -1,0 +1,24 @@
+# OpenAlgo xlwings Lite Dependencies
+# These packages are required for the xlwings Lite implementation
+
+# Core xlwings package for Excel integration
+xlwings==0.33.14
+
+# Required for environment configuration
+python-dotenv==1.1.0
+
+# Data manipulation (for advanced data formatting)
+pandas
+
+# Code formatting (required by xlwings Lite)
+black
+
+# HTTP requests compatibility with Pyodide/WebAssembly
+# Note: pyodide-http is automatically available in Pyodide environment
+# and will be imported conditionally in the main.py file
+
+# Standard library packages (included with Python)
+# - json (JSON handling)
+# - urllib (HTTP requests - Pyodide compatible)
+# - datetime (timestamp conversion)
+# - typing (type hints)
