@@ -22,18 +22,18 @@ except ImportError:
 # Global Configuration Storage
 class OpenAlgoConfig:
     """Global configuration for OpenAlgo API"""
-    api_key: str = ""
-    version: str = "v1"
-    host_url: str = "http://127.0.0.1:5000"
+    api_key = ""
+    version = "v1"
+    host_url = "http://127.0.0.1:5000"
 
 # Test Functions First
 @func
-def test_xlwings() -> str:
+def test_xlwings():
     """Test if xlwings Lite is working properly"""
     return "xlwings Lite is working! ✓"
 
 @func
-def test_imports() -> list:
+def test_imports():
     """Test which packages are available"""
     results = [["Package", "Status"]]
     
@@ -72,7 +72,7 @@ def test_imports() -> list:
     return results
 
 @func
-def test_config() -> list:
+def test_config():
     """Test configuration system"""
     return [
         ["Setting", "Value"],
@@ -83,7 +83,7 @@ def test_config() -> list:
     ]
 
 # Simple HTTP function
-def simple_post_request(endpoint: str, payload: dict) -> dict:
+def simple_post_request(endpoint, payload):
     """Simplified HTTP POST request"""
     try:
         data = json.dumps(payload).encode('utf-8')
@@ -98,7 +98,7 @@ def simple_post_request(endpoint: str, payload: dict) -> dict:
 
 # Basic Configuration Function
 @func
-def oa_api_simple(api_key: str, version: str = "v1", host_url: str = "http://127.0.0.1:5000") -> str:
+def oa_api_simple(api_key, version="v1", host_url="http://127.0.0.1:5000"):
     """Simplified version of oa_api for testing"""
     if not api_key or not api_key.strip():
         return "Error: API Key is required"
@@ -111,7 +111,7 @@ def oa_api_simple(api_key: str, version: str = "v1", host_url: str = "http://127
 
 # Basic Test Function
 @func
-def test_api_connection() -> list:
+def test_api_connection():
     """Test API connection with simplified error handling"""
     if not OpenAlgoConfig.api_key:
         return [["Status", "Error: API Key not set"]]
@@ -136,7 +136,7 @@ def test_api_connection() -> list:
 
 # Simple Market Data Function
 @func
-def oa_quotes_simple(symbol: str, exchange: str) -> list:
+def oa_quotes_simple(symbol, exchange):
     """Simplified quotes function for testing"""
     if not OpenAlgoConfig.api_key:
         return [["Error", "API Key not set. Use oa_api_simple()"]]
