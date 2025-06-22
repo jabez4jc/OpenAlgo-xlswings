@@ -6,7 +6,7 @@ cross-platform support for Windows, macOS, and Excel on the web.
 """
 
 import xlwings as xw
-from xlwings import func, script
+from xlwings import func, script, arg
 import json
 import urllib.request
 import urllib.parse
@@ -466,9 +466,19 @@ def test_xlwings():
     """Test if xlwings Lite is working properly"""
     return "xlwings Lite is working! ✓"
 
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1")
 def get_status():
-    """Get current system status"""
+    """Get current xlwings Lite system status and configuration
+    
+    Shows xlwings Lite operational status, API configuration, and request statistics.
+    Useful for troubleshooting and monitoring system health.
+    
+    Returns:
+        2D array with system status, configuration, and usage statistics
+        
+    Example:
+        =get_status()  # Check xlwings Lite system status
+    """
     return [
         ["xlwings Lite", "✓ Working"],
         ["API Key", "✓ Set" if OpenAlgoConfig.api_key else "✗ Not Set"],
@@ -582,17 +592,29 @@ def oa_debug_full_log():
     return result
 
 # Configuration Functions
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1")
+@arg("api_key", doc='Your OpenAlgo API key for authentication (get from OpenAlgo dashboard)')
+@arg("version", doc='API version to use (default: "v1")')
+@arg("host_url", doc='OpenAlgo server URL (default: "http://127.0.0.1:5000" for local)')
 def oa_api(api_key, version="v1", host_url="http://127.0.0.1:5000"):
-    """Set the OpenAlgo API Key, API Version, and Host URL globally.
+    """Configure OpenAlgo API credentials and connection settings
+    
+    Sets up the global configuration for all OpenAlgo trading functions.
+    This must be called first before using any other OpenAlgo functions.
     
     Args:
-        api_key: API Key for authentication (required)
-        version: API Version (default: v1)
-        host_url: Base API URL (default: http://127.0.0.1:5000)
-    
+        api_key: Your unique OpenAlgo API authentication key
+        version: API version (currently supports "v1")  
+        host_url: OpenAlgo server endpoint URL
+        
     Returns:
         Configuration confirmation message
+        
+    Examples:
+        =oa_api("your_api_key_here", "v1", "http://127.0.0.1:5000")
+        =oa_api("your_api_key_here")  # Uses defaults for version and URL
+        
+    Note: Get your API key from the OpenAlgo dashboard after login
     """
     if not api_key or not api_key.strip():
         return "Error: API Key is required."
@@ -603,9 +625,19 @@ def oa_api(api_key, version="v1", host_url="http://127.0.0.1:5000"):
     
     return f"Configuration updated: API Key Set, Version = {OpenAlgoConfig.version}, Host = {OpenAlgoConfig.host_url}"
 
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1")
 def oa_get_config():
-    """Get current OpenAlgo configuration"""
+    """Display current OpenAlgo API configuration settings
+    
+    Shows the current API credentials, connection settings, and system status.
+    Useful for verifying your setup before executing trading functions.
+    
+    Returns:
+        2D array showing configuration details with masked API key
+        
+    Example:
+        =oa_get_config()  # Shows current settings
+    """
     api_key_display = "***" + OpenAlgoConfig.api_key[-4:] if len(OpenAlgoConfig.api_key) > 4 else "Not Set"
     
     return [
@@ -618,15 +650,26 @@ def oa_get_config():
         ["Status", "Ready for dynamic API calls with HTTPS fallback"]
     ]
 
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1")
+@arg("format_type", doc='Display format: "auto" (intelligent), "table" (rows), "key_value" (pairs)')
 def oa_set_format(format_type="auto"):
-    """Set preferred response format for all functions
+    """Set preferred response format for all OpenAlgo functions
+    
+    Controls how API responses are displayed in Excel. Auto mode intelligently
+    chooses the best format based on data structure.
     
     Args:
-        format_type: Format preference ('auto', 'table', 'key_value')
-    
+        format_type: Response display format preference
+        
     Returns:
         Confirmation message
+        
+    Examples:
+        =oa_set_format("auto")       # Smart format selection (default)
+        =oa_set_format("table")      # Always use table format
+        =oa_set_format("key_value")  # Always use key-value pairs
+        
+    Note: Auto format provides the best user experience
     """
     valid_formats = ["auto", "table", "key_value"]
     if format_type not in valid_formats:
@@ -724,9 +767,29 @@ def oa_connection_help():
     ]
 
 # Market Data Functions
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1/data-api/quotes")
+@arg("symbol", doc='Trading symbol (e.g., "RELIANCE", "INFY", "NIFTY50")')
+@arg("exchange", doc='Exchange: "NSE" (stocks), "NFO" (F&O), "BSE", "MCX", "NSE_INDEX"')
 def oa_quotes(symbol, exchange):
-    """Get real-time quotes from OpenAlgo API"""
+    """Get real-time market quotes for a trading symbol
+    
+    Retrieves live market data including last traded price, bid/ask prices,
+    volume, and percentage change for the specified symbol.
+    
+    Args:
+        symbol: Trading symbol or stock code
+        exchange: Exchange where the symbol is traded
+        
+    Returns:
+        2D array with formatted quote data for Excel display
+        
+    Examples:
+        =oa_quotes("RELIANCE", "NSE")        # Get RELIANCE stock quote
+        =oa_quotes("NIFTY50", "NSE_INDEX")   # Get NIFTY index quote
+        =oa_quotes("BANKNIFTY24JUN50000CE", "NFO")  # Options quote
+        
+    Note: Requires API configuration via oa_api() function
+    """
     if not validate_api_key():
         return format_error("OpenAlgo API Key is not set. Use oa_api()")
     
@@ -743,9 +806,28 @@ def oa_quotes(symbol, exchange):
     custom_title = f"{symbol} ({exchange})"
     return process_api_response(response, endpoint, custom_title)
 
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1/data-api/depth")
+@arg("symbol", doc='Trading symbol (e.g., "RELIANCE", "INFY")')
+@arg("exchange", doc='Exchange: "NSE", "NFO", "BSE", "MCX"')
 def oa_depth(symbol, exchange):
-    """Get market depth from OpenAlgo API"""
+    """Get market depth (order book) for a trading symbol
+    
+    Retrieves bid/ask prices and quantities showing market depth.
+    Useful for understanding liquidity and price levels.
+    
+    Args:
+        symbol: Trading symbol to get depth for
+        exchange: Exchange where symbol is traded
+        
+    Returns:
+        2D array with ask/bid prices and quantities
+        
+    Examples:
+        =oa_depth("RELIANCE", "NSE")     # Get RELIANCE order book
+        =oa_depth("BANKNIFTY24JUN50000CE", "NFO")  # Options depth
+        
+    Note: Shows multiple price levels with quantities
+    """
     if not validate_api_key():
         return format_error("OpenAlgo API Key is not set. Use oa_api()")
     
@@ -781,9 +863,21 @@ def oa_depth(symbol, exchange):
     
     return result
 
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1/data-api/intervals")
 def oa_intervals():
-    """Get available time intervals from OpenAlgo API"""
+    """Get available time intervals for historical data
+    
+    Returns list of supported time intervals that can be used
+    with the oa_history() function for different chart timeframes.
+    
+    Returns:
+        2D array listing available intervals and their descriptions
+        
+    Example:
+        =oa_intervals()  # Shows: 1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w, 1M
+        
+    Note: Use these intervals with oa_history() function
+    """
     if not validate_api_key():
         return format_error("OpenAlgo API Key is not set. Use oa_api()")
     
@@ -813,9 +907,21 @@ def oa_intervals():
     return result
 
 # Account Management Functions
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1/account/funds")
 def oa_funds():
-    """Get account funds from OpenAlgo API"""
+    """Get available trading funds and account balance
+    
+    Retrieves current account balance, available margin, and fund details
+    from your trading account through OpenAlgo.
+    
+    Returns:
+        2D array showing fund categories and amounts
+        
+    Example:
+        =oa_funds()  # Shows available cash, margin, total balance
+        
+    Note: Shows real account balance - verify before trading
+    """
     if not validate_api_key():
         return format_error("OpenAlgo API Key is not set. Use oa_api()")
     
@@ -827,9 +933,21 @@ def oa_funds():
     # Use dynamic response processor
     return process_api_response(response, endpoint)
 
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1/account/orderbook")
 def oa_orderbook():
-    """Get order book from OpenAlgo API"""
+    """Get current order book (pending/active orders)
+    
+    Retrieves all pending, partially filled, and recently executed orders
+    from your trading account. Shows order status and details.
+    
+    Returns:
+        2D array with order details including status, symbol, quantity, price
+        
+    Example:
+        =oa_orderbook()  # Shows all active and recent orders
+        
+    Note: Updates in real-time - refresh to see latest status
+    """
     if not validate_api_key():
         return format_error("OpenAlgo API Key is not set. Use oa_api()")
     
@@ -841,9 +959,21 @@ def oa_orderbook():
     # Use dynamic response processor
     return process_api_response(response, endpoint)
 
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1/account/tradebook")
 def oa_tradebook():
-    """Get trade book from OpenAlgo API"""
+    """Get trade book (executed trades history)
+    
+    Retrieves all completed trades and executions from your account.
+    Shows trade details including prices, quantities, and timestamps.
+    
+    Returns:
+        2D array with executed trade details and P&L information
+        
+    Example:
+        =oa_tradebook()  # Shows all executed trades today
+        
+    Note: Shows actual executed trades with final prices
+    """
     if not validate_api_key():
         return format_error("OpenAlgo API Key is not set. Use oa_api()")
     
@@ -855,9 +985,21 @@ def oa_tradebook():
     # Use dynamic response processor
     return process_api_response(response, endpoint)
 
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1/account/positionbook")
 def oa_positionbook():
-    """Get position book from OpenAlgo API"""
+    """Get current position book (open positions)
+    
+    Retrieves all current open positions in your account showing
+    quantities held, average prices, and unrealized P&L.
+    
+    Returns:
+        2D array with position details, quantities, and P&L
+        
+    Example:
+        =oa_positionbook()  # Shows all open positions
+        
+    Note: Shows real-time P&L - values change with market prices
+    """
     if not validate_api_key():
         return format_error("OpenAlgo API Key is not set. Use oa_api()")
     
@@ -869,9 +1011,21 @@ def oa_positionbook():
     # Use dynamic response processor
     return process_api_response(response, endpoint)
 
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1/account/holdings")
 def oa_holdings():
-    """Get holdings from OpenAlgo API"""
+    """Get long-term holdings and investments
+    
+    Retrieves all stocks and securities held in your demat account
+    for delivery/investment purposes. Shows quantities and current values.
+    
+    Returns:
+        2D array with holdings details, quantities, and market values
+        
+    Example:
+        =oa_holdings()  # Shows all long-term stock holdings
+        
+    Note: Different from positions - these are delivery holdings
+    """
     if not validate_api_key():
         return format_error("OpenAlgo API Key is not set. Use oa_api()")
     
@@ -890,9 +1044,47 @@ def handle_optional_param(param, default="0"):
         return default
     return str(param)
 
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1/orders-api/placeorder")
+@arg("strategy", doc='Strategy name for order identification (e.g., "MyStrategy", "Scalping")')
+@arg("symbol", doc='Trading symbol (e.g., "RELIANCE", "NIFTY24JUN21000CE")')
+@arg("action", doc='Order direction: "BUY" or "SELL"')
+@arg("exchange", doc='Exchange: "NSE" (stocks), "NFO" (F&O), "BSE", "MCX"')
+@arg("pricetype", doc='Order type: "MARKET", "LIMIT", "SL" (stop loss), "SL-M" (stop market)')
+@arg("product", doc='Product: "MIS" (intraday), "CNC" (delivery), "NRML" (normal F&O)')
+@arg("quantity", doc='Number of shares/contracts to trade')
+@arg("price", doc='Limit price (required for LIMIT orders, 0 for MARKET orders)')
+@arg("trigger_price", doc='Stop loss trigger price (for SL orders, 0 otherwise)')
+@arg("disclosed_quantity", doc='Iceberg order disclosed quantity (0 for regular orders)')
 def oa_placeorder(strategy, symbol, action, exchange, pricetype, product, quantity, price=0, trigger_price=0, disclosed_quantity=0):
-    """Place an order via OpenAlgo API - CAUTION: REAL ORDERS!"""
+    """⚠️ PLACE REAL TRADING ORDER - EXECUTES WITH REAL MONEY!
+    
+    Places a live trading order with your broker through OpenAlgo.
+    This function executes actual trades with real money. Always verify
+    parameters carefully and test strategies thoroughly before live trading.
+    
+    Args:
+        strategy: Strategy identifier for order tracking and grouping
+        symbol: Trading instrument symbol or stock code
+        action: Buy or sell instruction
+        exchange: Trading exchange where symbol is listed
+        pricetype: Order execution type (market vs limit)
+        product: Position type and margin requirements
+        quantity: Number of shares or contracts to trade
+        price: Limit price for LIMIT orders (optional for MARKET)
+        trigger_price: Stop loss trigger level (optional)
+        disclosed_quantity: Visible quantity for iceberg orders (optional)
+        
+    Returns:
+        Order confirmation with order ID or error message
+        
+    Examples:
+        =oa_placeorder("Test", "RELIANCE", "BUY", "NSE", "MARKET", "MIS", 10)
+        =oa_placeorder("Test", "RELIANCE", "BUY", "NSE", "LIMIT", "CNC", 10, 2500)
+        =oa_placeorder("Algo1", "NIFTY24JUN21000CE", "SELL", "NFO", "LIMIT", "NRML", 50, 150)
+        
+    ⚠️ CRITICAL WARNING: This places real orders with real money!
+    Always verify symbol, quantity, and price before execution.
+    """
     if not validate_api_key():
         return format_error("OpenAlgo API Key is not set. Use oa_api()")
     
@@ -918,9 +1110,46 @@ def oa_placeorder(strategy, symbol, action, exchange, pricetype, product, quanti
     order_id = response.get("orderid", "Unknown")
     return [["⚠️ ORDER PLACED", "Order ID"], ["Result", str(order_id)]]
 
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1/orders-api/modifyorder")
+@arg("strategy", doc='Strategy name that placed the original order')
+@arg("order_id", doc='Order ID to modify (from oa_placeorder or oa_orderbook)')
+@arg("symbol", doc='Trading symbol (must match original order)')
+@arg("action", doc='Order direction: "BUY" or "SELL"')
+@arg("exchange", doc='Exchange: "NSE", "NFO", "BSE", "MCX"')
+@arg("quantity", doc='New quantity for the order')
+@arg("pricetype", doc='New order type: "MARKET", "LIMIT", "SL", "SL-M"')
+@arg("product", doc='Product type: "MIS", "CNC", "NRML"')
+@arg("price", doc='New limit price (for LIMIT orders)')
+@arg("trigger_price", doc='New stop trigger price (for SL orders)')
+@arg("disclosed_quantity", doc='New iceberg quantity (0 for regular)')
 def oa_modifyorder(strategy, order_id, symbol, action, exchange, quantity, pricetype="MARKET", product="MIS", price=0, trigger_price=0, disclosed_quantity=0):
-    """Modify an existing order"""
+    """Modify an existing pending order
+    
+    Updates price, quantity, or order type of an existing order.
+    Only pending orders can be modified - executed orders cannot be changed.
+    
+    Args:
+        strategy: Strategy that placed the original order
+        order_id: Unique identifier of the order to modify
+        symbol: Trading symbol (must match original)
+        action: Buy or sell direction
+        exchange: Trading exchange
+        quantity: Updated order quantity
+        pricetype: Updated order type
+        product: Position type
+        price: Updated limit price (if applicable)
+        trigger_price: Updated stop trigger (if applicable)
+        disclosed_quantity: Updated iceberg quantity (if applicable)
+        
+    Returns:
+        Modification confirmation or error message
+        
+    Examples:
+        =oa_modifyorder("Test", "240622000001", "RELIANCE", "BUY", "NSE", 20, "LIMIT", "MIS", 2510)
+        =oa_modifyorder("Algo1", "240622000002", "INFY", "SELL", "NSE", 5, "SL", "CNC", 1800, 1780)
+        
+    Note: Get order_id from oa_orderbook() or oa_placeorder() response
+    """
     if not validate_api_key():
         return format_error("OpenAlgo API Key is not set. Use oa_api()")
     
@@ -948,9 +1177,28 @@ def oa_modifyorder(strategy, order_id, symbol, action, exchange, quantity, price
     message = response.get("message", "Order modification request sent")
     return [["Status", str(status)], ["Message", str(message)]]
 
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1/orders-api/cancelorder")
+@arg("strategy", doc='Strategy name that placed the original order')
+@arg("order_id", doc='Order ID to cancel (from oa_placeorder or oa_orderbook)')
 def oa_cancelorder(strategy, order_id):
-    """Cancel a specific order"""
+    """Cancel a specific pending order
+    
+    Cancels an existing pending order. Only pending orders can be cancelled.
+    Executed or partially executed orders cannot be cancelled.
+    
+    Args:
+        strategy: Strategy identifier that placed the order
+        order_id: Unique order identifier to cancel
+        
+    Returns:
+        Cancellation confirmation or error message
+        
+    Examples:
+        =oa_cancelorder("Test", "240622000001")     # Cancel specific order
+        =oa_cancelorder("MyAlgo", "240622000002")   # Cancel by strategy
+        
+    Note: Get order_id from oa_orderbook() function
+    """
     if not validate_api_key():
         return format_error("OpenAlgo API Key is not set. Use oa_api()")
     
@@ -969,9 +1217,28 @@ def oa_cancelorder(strategy, order_id):
     message = response.get("message", "Order cancellation request sent")
     return [["Status", str(status)], ["Message", str(message)]]
 
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1/orders-api/orderstatus")
+@arg("strategy", doc='Strategy name that placed the order')
+@arg("order_id", doc='Order ID to check status (from oa_placeorder or oa_orderbook)')
 def oa_orderstatus(strategy, order_id):
-    """Get order status and details"""
+    """Get detailed status and information for a specific order
+    
+    Retrieves complete order details including current status, fill quantities,
+    prices, timestamps, and execution information.
+    
+    Args:
+        strategy: Strategy identifier that placed the order
+        order_id: Unique order identifier to check
+        
+    Returns:
+        2D array with detailed order status and execution info
+        
+    Examples:
+        =oa_orderstatus("Test", "240622000001")    # Check order status
+        =oa_orderstatus("MyAlgo", "240622000002")  # Detailed order info
+        
+    Note: Shows real-time status - refresh to see latest updates
+    """
     if not validate_api_key():
         return format_error("OpenAlgo API Key is not set. Use oa_api()")
     
@@ -1043,9 +1310,21 @@ def oa_all_functions():
         ["Error Handling", "Clear error messages", "Better validation and feedback"]
     ]
 
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1")
 def oa_test_connection():
-    """Test connection to OpenAlgo API"""
+    """Test connectivity to OpenAlgo API server
+    
+    Verifies that your API key is valid and the OpenAlgo server is reachable.
+    Run this after setting up oa_api() to confirm everything is working.
+    
+    Returns:
+        Connection test results with status and error details
+        
+    Example:
+        =oa_test_connection()  # Test API connectivity and authentication
+        
+    Note: Run this first to verify setup before using trading functions
+    """
     if not validate_api_key():
         return format_error("OpenAlgo API Key is not set. Use oa_api()")
     
@@ -1074,9 +1353,35 @@ def oa_test_connection():
             ["Error", str(e)]
         ]
 
-@func
+@func(help_url="https://docs.openalgo.in/api-documentation/v1/data-api/history")
+@arg("symbol", doc='Trading symbol (e.g., "RELIANCE", "NIFTY50")')
+@arg("exchange", doc='Exchange: "NSE", "NFO", "BSE", "MCX", "NSE_INDEX"')
+@arg("interval", doc='Time interval: "1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w", "1M"')
+@arg("start_date", doc='Start date in YYYY-MM-DD format (e.g., "2024-01-01")')
+@arg("end_date", doc='End date in YYYY-MM-DD format (e.g., "2024-01-31")')
 def oa_history(symbol, exchange, interval, start_date, end_date):
-    """Get historical data from OpenAlgo API"""
+    """Get historical OHLCV data for charting and analysis
+    
+    Retrieves historical price data with Open, High, Low, Close, and Volume
+    for specified date range and time interval. Essential for backtesting.
+    
+    Args:
+        symbol: Trading symbol to get historical data for
+        exchange: Exchange where symbol is traded
+        interval: Time interval for candles/bars
+        start_date: Starting date for data range
+        end_date: Ending date for data range
+        
+    Returns:
+        2D array with Date, Time, Open, High, Low, Close, Volume columns
+        
+    Examples:
+        =oa_history("RELIANCE", "NSE", "1d", "2024-01-01", "2024-01-31")    # Daily data
+        =oa_history("NIFTY50", "NSE_INDEX", "1h", "2024-06-01", "2024-06-07")  # Hourly
+        =oa_history("BANKNIFTY24JUN50000CE", "NFO", "5m", "2024-06-20", "2024-06-21")  # 5min
+        
+    Note: Use oa_intervals() to see all available time intervals
+    """
     if not validate_api_key():
         return format_error("OpenAlgo API Key is not set. Use oa_api()")
     

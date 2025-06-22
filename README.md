@@ -15,6 +15,7 @@ This is the xlwings Lite port of the OpenAlgo Excel Add-in, providing seamless i
 ✅ **Secure**: Runs in browser sandbox  
 🆕 **Dynamic API Processing**: Automatically adapts to API response format changes  
 🆕 **Smart Formatting**: Intelligent field ordering and data presentation  
+🆕 **Excel IntelliSense**: Professional function help text and parameter hints  
 
 ## 🆕 NEW: Dynamic Response Features
 
@@ -30,6 +31,13 @@ This is the xlwings Lite port of the OpenAlgo Excel Add-in, providing seamless i
 - **`=oa_set_format("auto"|"table"|"key_value")`** - Set display preference
 - **`=oa_response_info()`** - Learn about dynamic features
 - **`=oa_all_functions()`** - Enhanced function list with new features
+
+### 🆕 Excel IntelliSense Features
+- **Function Wizard Integration**: Detailed descriptions appear in Excel's Insert Function dialog
+- **Parameter Hints**: IntelliSense shows parameter names and descriptions while typing
+- **Help URLs**: Direct links to OpenAlgo API documentation for each function
+- **Usage Examples**: Real-world examples included in function descriptions
+- **Professional Documentation**: Comprehensive help text like built-in Excel functions
 
 ## Prerequisites
 
@@ -421,3 +429,4 @@ This add-in is provided as-is. Test thoroughly in demo/paper trading mode before
 - 🔧 **User Configuration**: Control display preferences with `oa_set_format()`
 - 🐛 **Better Debugging**: Comprehensive request/response logging
 - 🌐 **CORS Guide**: Complete setup instructions for Excel Online compatibility
+- 📚 **Excel IntelliSense**: Professional function documentation with parameter hints and help links
