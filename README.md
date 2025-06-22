@@ -85,6 +85,9 @@ CORS_ALLOWED_ORIGINS=http://127.0.0.1:5000,https://addin.xlwings.org
 | `=oa_set_format("auto")` | 🆕 Set response format preference | New feature |
 | `=oa_response_info()` | 🆕 Learn about dynamic features | New feature |
 | `=oa_test_connection()` | Test API connection | |
+| `=oa_force_http(True)` | 🆕 Force HTTP for HTTPS compatibility | Protocol management |
+| `=oa_test_https_support()` | 🆕 Test HTTPS support in environment | Diagnostics |
+| `=oa_connection_help()` | 🆕 Get help for connection issues | Troubleshooting |
 
 ### 📌 Market Data (🔄 Auto-Formatted)
 | Function | Description | Dynamic Features |
@@ -258,6 +261,8 @@ Error: No data received from API
 2. **Check CORS**: Ensure `.env` file is updated
 3. **Verify API Key**: Use `=oa_get_config()`
 4. **Check Server**: Ensure OpenAlgo is running
+5. **HTTPS Issues**: Use `=oa_test_https_support()` for diagnostics
+6. **Protocol Problems**: Try `=oa_force_http(True)` for compatibility
 
 ## File Structure
 
@@ -327,6 +332,29 @@ Solution: Add https://addin.xlwings.org to CORS_ALLOWED_ORIGINS in OpenAlgo .env
 **Functions work locally but not in Excel Online**
 ```
 Solution: Ensure CORS_ALLOWED_ORIGINS includes https://addin.xlwings.org
+```
+
+### HTTPS Compatibility Issues
+
+**Error: URL Error: unknown url type: https**
+```excel
+' This error occurs when HTTPS is not supported in the xlwings Lite environment
+' Solution 1: Enable automatic HTTP fallback (recommended)
+=oa_force_http(True)
+
+' Solution 2: Use HTTP URL in configuration
+=oa_api("API_KEY", "v1", "http://127.0.0.1:5000")
+
+' Solution 3: Test HTTPS support first
+=oa_test_https_support()
+```
+
+**HTTPS works sometimes but not always**
+```excel
+' The system automatically falls back to HTTP when HTTPS fails
+' Check configuration and diagnostics
+=oa_get_config()
+=oa_connection_help()
 ```
 
 ### Function Issues

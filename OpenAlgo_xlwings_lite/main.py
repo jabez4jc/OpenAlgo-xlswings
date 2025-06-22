@@ -39,12 +39,20 @@ except ImportError:
     # Running in standard Python environment
     PYODIDE_AVAILABLE = False
 
+# Try to import SSL for HTTPS support
+try:
+    import ssl
+    SSL_AVAILABLE = True
+except ImportError:
+    SSL_AVAILABLE = False
+
 # Global Configuration Storage
 class OpenAlgoConfig:
     """Global configuration for OpenAlgo API"""
     api_key = ""
     version = "v1"
     host_url = "http://127.0.0.1:5000"
+    force_http = False  # Force HTTP instead of HTTPS for compatibility
 
 # Global debug storage for request/response logging
 class DebugLog:
@@ -85,41 +93,111 @@ class ResponseConfig:
     }
 
 # Utility Functions
-def post_request(endpoint, payload):
-    """Make HTTP POST request using urllib (Pyodide compatible)"""
+def normalize_url(endpoint):
+    """Normalize URL and handle protocol issues"""
+    if OpenAlgoConfig.force_http and endpoint.startswith('https://'):
+        endpoint = endpoint.replace('https://', 'http://')
+        print(f"[URL_NORMALIZE] Forced HTTP: {endpoint}")
+    return endpoint
+
+def create_ssl_context():
+    """Create SSL context for HTTPS requests"""
+    if not SSL_AVAILABLE:
+        return None
+    
     try:
-        # Log the request
-        DebugLog.request_count += 1
-        DebugLog.last_request = {
-            "endpoint": endpoint,
-            "payload": payload,
-            "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            "request_id": DebugLog.request_count
-        }
-        
-        print(f"[REQUEST {DebugLog.request_count}] {endpoint}")
-        print(f"[PAYLOAD {DebugLog.request_count}] {json.dumps(payload, indent=2)}")
+        # Create SSL context that works in WebAssembly
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+        return context
+    except Exception as e:
+        print(f"[SSL_WARNING] Could not create SSL context: {e}")
+        return None
+
+def post_request_with_fallback(endpoint, payload, attempt=1):
+    """Make HTTP POST request with protocol fallback"""
+    if attempt > 2:  # Avoid infinite recursion
+        return {"error": "All connection attempts failed"}
+    
+    try:
+        print(f"[CONNECTION_ATTEMPT {attempt}] {endpoint}")
         
         data = json.dumps(payload).encode('utf-8')
         headers = {
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'User-Agent': 'OpenAlgo-xlwings-Lite/1.0'
         }
         
         request = urllib.request.Request(endpoint, data=data, headers=headers)
-        response = urllib.request.urlopen(request, timeout=30)
+        
+        # Try with SSL context for HTTPS
+        if endpoint.startswith('https://'):
+            ssl_context = create_ssl_context()
+            if ssl_context:
+                response = urllib.request.urlopen(request, timeout=30, context=ssl_context)
+            else:
+                response = urllib.request.urlopen(request, timeout=30)
+        else:
+            response = urllib.request.urlopen(request, timeout=30)
         
         response_data = json.loads(response.read().decode('utf-8'))
+        print(f"[CONNECTION_SUCCESS] Attempt {attempt} succeeded")
+        return response_data
         
-        # Log the response
+    except urllib.error.URLError as e:
+        error_str = str(e.reason)
+        if "unknown url type: https" in error_str.lower() and endpoint.startswith('https://'):
+            print(f"[HTTPS_FALLBACK] HTTPS not supported, trying HTTP")
+            http_endpoint = endpoint.replace('https://', 'http://')
+            return post_request_with_fallback(http_endpoint, payload, attempt + 1)
+        else:
+            raise e  # Re-raise for other handling
+    
+    except Exception as e:
+        if attempt == 1 and endpoint.startswith('https://'):
+            print(f"[PROTOCOL_FALLBACK] HTTPS failed ({e}), trying HTTP")
+            http_endpoint = endpoint.replace('https://', 'http://')
+            return post_request_with_fallback(http_endpoint, payload, attempt + 1)
+        else:
+            raise e  # Re-raise for other handling
+
+def post_request(endpoint, payload):
+    """Make HTTP POST request using urllib (Pyodide compatible with HTTPS fallback)"""
+    # Log the request
+    DebugLog.request_count += 1
+    DebugLog.last_request = {
+        "endpoint": endpoint,
+        "payload": payload,
+        "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "request_id": DebugLog.request_count
+    }
+    
+    print(f"[REQUEST {DebugLog.request_count}] {endpoint}")
+    print(f"[PAYLOAD {DebugLog.request_count}] {json.dumps(payload, indent=2)}")
+    
+    # Normalize URL based on configuration
+    normalized_endpoint = normalize_url(endpoint)
+    
+    try:
+        # Try request with automatic fallback
+        response_data = post_request_with_fallback(normalized_endpoint, payload)
+        
+        # Check if we got an error response from fallback
+        if isinstance(response_data, dict) and "error" in response_data:
+            raise Exception(response_data["error"])
+        
+        # Log successful response
         DebugLog.last_response = {
-            "status_code": response.getcode(),
+            "status_code": 200,
             "data": response_data,
             "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            "request_id": DebugLog.request_count
+            "request_id": DebugLog.request_count,
+            "final_endpoint": normalized_endpoint
         }
         
-        print(f"[RESPONSE {DebugLog.request_count}] Status: {response.getcode()}")
+        print(f"[RESPONSE {DebugLog.request_count}] Status: 200")
         print(f"[DATA {DebugLog.request_count}] {json.dumps(response_data, indent=2)}")
         
         return response_data
@@ -137,6 +215,8 @@ def post_request(endpoint, payload):
         
     except urllib.error.URLError as e:
         error_msg = f"URL Error: {e.reason}"
+        if "unknown url type: https" in str(e.reason).lower():
+            error_msg += " (HTTPS not supported - try HTTP or use oa_force_http())"
         DebugLog.last_response = {
             "error": error_msg,
             "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -533,8 +613,9 @@ def oa_get_config():
         ["API Key", api_key_display],
         ["Version", OpenAlgoConfig.version],
         ["Host URL", OpenAlgoConfig.host_url],
+        ["Force HTTP Mode", "Enabled" if OpenAlgoConfig.force_http else "Disabled"],
         ["Response Format", ResponseConfig.preferred_format],
-        ["Status", "Ready for dynamic API calls"]
+        ["Status", "Ready for dynamic API calls with HTTPS fallback"]
     ]
 
 @func
@@ -568,6 +649,78 @@ def oa_response_info():
         ["Schema Learning", "Adapts to different API response patterns"],
         ["List/Dict Handling", "Handles response format inconsistencies"],
         ["Error Processing", "Provides clear error messages"]
+    ]
+
+@func
+def oa_force_http(enable=True):
+    """Enable or disable forced HTTP mode for HTTPS compatibility
+    
+    Args:
+        enable: True to force HTTP, False to allow HTTPS (default: True)
+    
+    Returns:
+        Configuration confirmation message
+    """
+    OpenAlgoConfig.force_http = bool(enable)
+    if enable:
+        return "Forced HTTP mode enabled - all HTTPS URLs will be converted to HTTP"
+    else:
+        return "Forced HTTP mode disabled - HTTPS URLs will be used as-is"
+
+@func
+def oa_test_https_support():
+    """Test if HTTPS is supported in the current environment
+    
+    Returns:
+        Test results and recommendations
+    """
+    result = [
+        ["Test", "Result", "Recommendation"]
+    ]
+    
+    # Test SSL availability
+    if SSL_AVAILABLE:
+        result.append(["SSL Module", "✓ Available", "HTTPS should work"])
+    else:
+        result.append(["SSL Module", "✗ Not Available", "Use HTTP or force_http mode"])
+    
+    # Test Pyodide environment
+    if PYODIDE_AVAILABLE:
+        result.append(["Pyodide Environment", "✓ Detected", "WebAssembly optimizations enabled"])
+    else:
+        result.append(["Pyodide Environment", "✗ Standard Python", "Standard HTTP/HTTPS support"])
+    
+    # Test current configuration
+    if OpenAlgoConfig.force_http:
+        result.append(["Force HTTP Mode", "✓ Enabled", "All requests will use HTTP"])
+    else:
+        result.append(["Force HTTP Mode", "✗ Disabled", "HTTPS will be attempted first"])
+    
+    # Show current host protocol
+    host_protocol = "HTTPS" if OpenAlgoConfig.host_url.startswith('https://') else "HTTP"
+    result.append(["Current Host Protocol", host_protocol, "Configure with oa_api()"])
+    
+    return result
+
+@func
+def oa_connection_help():
+    """Get help for connection issues and HTTPS problems
+    
+    Returns:
+        Help information and troubleshooting steps
+    """
+    return [
+        ["Issue", "Solution"],
+        ["URL Error: unknown url type: https", "Use oa_force_http(True) or change host to HTTP"],
+        ["HTTPS not working", "Run oa_test_https_support() for diagnostics"],
+        ["Functions return #VALUE!", "Check oa_test_connection() and CORS settings"],
+        ["NetworkError in browser", "Add https://addin.xlwings.org to CORS_ALLOWED_ORIGINS"],
+        ["Connection timeout", "Check if OpenAlgo server is running"],
+        ["HTTP 401 Unauthorized", "Verify API key with oa_get_config()"],
+        ["JSON Decode Error", "Check server response format"],
+        ["Protocol fallback active", "System automatically trying HTTP after HTTPS fails"],
+        ["Best practice", "Use HTTP (port 5000) for local development"],
+        ["Production setup", "Configure CORS properly for HTTPS"]
     ]
 
 # Market Data Functions
