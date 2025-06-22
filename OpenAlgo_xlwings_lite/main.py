@@ -11,16 +11,34 @@ import json
 import urllib.request
 import urllib.parse
 from datetime import datetime
-from typing import List, Any, Optional, Union
-import pandas as pd
+
+# Optional imports with proper error handling
+try:
+    from typing import List, Any, Optional, Union
+    TYPING_AVAILABLE = True
+except ImportError:
+    TYPING_AVAILABLE = False
+    # Fallback for environments without typing
+    List = list
+    Any = object
+    Optional = object
+    Union = object
+
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+    pd = None
 
 # Try to import pyodide_http for WebAssembly compatibility
 try:
     import pyodide_http
     pyodide_http.patch_all()
+    PYODIDE_AVAILABLE = True
 except ImportError:
     # Running in standard Python environment
-    pass
+    PYODIDE_AVAILABLE = False
 
 # Global Configuration Storage
 class OpenAlgoConfig:
@@ -52,7 +70,7 @@ def post_request(endpoint: str, payload: dict) -> dict:
     except Exception as e:
         return {"error": str(e)}
 
-def format_for_excel(data: Any, headers: Optional[List[str]] = None) -> List[List[Any]]:
+def format_for_excel(data, headers=None):
     """Convert various data types to Excel-friendly 2D arrays"""
     if isinstance(data, dict):
         # Convert dict to 2D array (key-value pairs)
@@ -92,8 +110,8 @@ def format_for_excel(data: Any, headers: Optional[List[str]] = None) -> List[Lis
             # List of simple values
             return [[str(item)] for item in data]
     
-    elif isinstance(data, pd.DataFrame):
-        # Pandas DataFrame
+    elif PANDAS_AVAILABLE and pd and isinstance(data, pd.DataFrame):
+        # Pandas DataFrame (only if pandas is available)
         result = [data.columns.tolist()]
         result.extend(data.values.tolist())
         return result
@@ -102,17 +120,49 @@ def format_for_excel(data: Any, headers: Optional[List[str]] = None) -> List[Lis
         # Single value
         return [[str(data)]]
 
-def validate_api_key() -> bool:
+def validate_api_key():
     """Check if API key is configured"""
     return bool(OpenAlgoConfig.api_key and OpenAlgoConfig.api_key.strip())
 
-def format_error(message: str) -> List[List[str]]:
+def format_error(message):
     """Return error in Excel-compatible format"""
     return [[f"Error: {message}"]]
 
+# Debugging Functions - Use these first to troubleshoot #BUSY! errors
+@func
+def test_xlwings():
+    """Test if xlwings Lite is working properly"""
+    return "xlwings Lite is working! ✓"
+
+@func
+def test_imports():
+    """Test which packages are available"""
+    results = [["Package", "Status"]]
+    
+    # Test core imports
+    results.append(["json", "✓ Available"])
+    results.append(["urllib.request", "✓ Available"])
+    results.append(["datetime", "✓ Available"])
+    results.append(["typing", "✓ Available" if TYPING_AVAILABLE else "✗ Missing"])
+    results.append(["pandas", "✓ Available" if PANDAS_AVAILABLE else "✗ Missing"])
+    results.append(["pyodide_http", "✓ Available" if PYODIDE_AVAILABLE else "✗ Missing"])
+    
+    return results
+
+@func
+def test_config():
+    """Test configuration system"""
+    return [
+        ["Setting", "Value"],
+        ["API Key", "Not Set" if not OpenAlgoConfig.api_key else "Set"],
+        ["Version", OpenAlgoConfig.version],
+        ["Host URL", OpenAlgoConfig.host_url],
+        ["Pyodide", "Available" if PYODIDE_AVAILABLE else "Not Available"]
+    ]
+
 # Configuration Function
 @func
-def oa_api(api_key: str, version: str = "v1", host_url: str = "http://127.0.0.1:5000") -> str:
+def oa_api(api_key, version="v1", host_url="http://127.0.0.1:5000"):
     """Set the OpenAlgo API Key, API Version, and Host URL globally.
     
     Args:
@@ -134,7 +184,7 @@ def oa_api(api_key: str, version: str = "v1", host_url: str = "http://127.0.0.1:
 
 # Market Data Functions
 @func
-def oa_quotes(symbol: str, exchange: str) -> List[List[str]]:
+def oa_quotes(symbol, exchange):
     """Retrieve market quotes for a given symbol.
     
     Args:
@@ -170,7 +220,7 @@ def oa_quotes(symbol: str, exchange: str) -> List[List[str]]:
     return result
 
 @func
-def oa_depth(symbol: str, exchange: str) -> List[List[str]]:
+def oa_depth(symbol, exchange):
     """Retrieve market depth for a given symbol.
     
     Args:
@@ -217,7 +267,7 @@ def oa_depth(symbol: str, exchange: str) -> List[List[str]]:
     return result
 
 @func
-def oa_history(symbol: str, exchange: str, interval: str, start_date: str, end_date: str) -> List[List[str]]:
+def oa_history(symbol, exchange, interval, start_date, end_date):
     """Retrieve historical data for a given symbol.
     
     Args:
@@ -279,7 +329,7 @@ def oa_history(symbol: str, exchange: str, interval: str, start_date: str, end_d
     return result
 
 @func
-def oa_intervals() -> List[List[str]]:
+def oa_intervals():
     """Retrieve available time intervals.
     
     Returns:
@@ -315,7 +365,7 @@ def oa_intervals() -> List[List[str]]:
 
 # Account Management Functions
 @func
-def oa_funds() -> List[List[str]]:
+def oa_funds():
     """Retrieve funds from OpenAlgo API.
     
     Returns:
@@ -343,7 +393,7 @@ def oa_funds() -> List[List[str]]:
     return result
 
 @func
-def oa_orderbook() -> List[List[str]]:
+def oa_orderbook():
     """Retrieve the order book from OpenAlgo API.
     
     Returns:
@@ -399,7 +449,7 @@ def oa_orderbook() -> List[List[str]]:
     return result
 
 @func
-def oa_tradebook() -> List[List[str]]:
+def oa_tradebook():
     """Retrieve the trade book from OpenAlgo API.
     
     Returns:
@@ -453,7 +503,7 @@ def oa_tradebook() -> List[List[str]]:
     return result
 
 @func
-def oa_positionbook() -> List[List[str]]:
+def oa_positionbook():
     """Retrieve the position book from OpenAlgo API.
     
     Returns:
@@ -490,7 +540,7 @@ def oa_positionbook() -> List[List[str]]:
     return result
 
 @func
-def oa_holdings() -> List[List[str]]:
+def oa_holdings():
     """Retrieve holdings from OpenAlgo API.
     
     Returns:
@@ -528,7 +578,7 @@ def oa_holdings() -> List[List[str]]:
     return result
 
 # Order Management Functions
-def handle_optional_param(param: Any, default: str = "0") -> str:
+def handle_optional_param(param, default="0"):
     """Handle Excel optional parameters - convert None to default"""
     if param is None or param == "":
         return default
@@ -536,17 +586,17 @@ def handle_optional_param(param: Any, default: str = "0") -> str:
 
 @func
 def oa_placeorder(
-    strategy: str,
-    symbol: str, 
-    action: str,
-    exchange: str,
-    pricetype: str,
-    product: str,
-    quantity: Union[str, int, float] = 0,
-    price: Union[str, int, float] = 0,
-    trigger_price: Union[str, int, float] = 0,
-    disclosed_quantity: Union[str, int, float] = 0
-) -> List[List[str]]:
+    strategy,
+    symbol, 
+    action,
+    exchange,
+    pricetype,
+    product,
+    quantity=0,
+    price=0,
+    trigger_price=0,
+    disclosed_quantity=0
+):
     """Place an order via OpenAlgo API.
     
     Args:
@@ -603,7 +653,7 @@ def oa_modifyorder(
     price: Union[str, int, float] = 0,
     trigger_price: Union[str, int, float] = 0,
     disclosed_quantity: Union[str, int, float] = 0
-) -> List[List[str]]:
+):
     """Modify an existing order.
     
     Args:
@@ -650,7 +700,7 @@ def oa_modifyorder(
     return [["Status", str(status)], ["Message", str(message)]]
 
 @func
-def oa_cancelorder(strategy: str, order_id: str) -> List[List[str]]:
+def oa_cancelorder(strategy: str, order_id: str):
     """Cancel a specific order.
     
     Args:
@@ -679,7 +729,7 @@ def oa_cancelorder(strategy: str, order_id: str) -> List[List[str]]:
     return [["Status", str(status)], ["Message", str(message)]]
 
 @func
-def oa_orderstatus(strategy: str, order_id: str) -> List[List[str]]:
+def oa_orderstatus(strategy: str, order_id: str):
     """Get order status and details.
     
     Args:
@@ -723,7 +773,7 @@ def oa_orderstatus(strategy: str, order_id: str) -> List[List[str]]:
     return result
 
 @func
-def oa_openposition(strategy: str, symbol: str, exchange: str, product: str) -> List[List[str]]:
+def oa_openposition(strategy: str, symbol: str, exchange: str, product: str):
     """Get open position details for specific instrument.
     
     Args:
@@ -763,7 +813,7 @@ def oa_openposition(strategy: str, symbol: str, exchange: str, product: str) -> 
     return result
 
 @func
-def oa_closeposition(strategy: str) -> List[List[str]]:
+def oa_closeposition(strategy: str):
     """Close all open positions for a strategy.
     
     Args:
@@ -824,7 +874,7 @@ def oa_placesmartorder(
     price: Union[str, int, float] = 0,
     trigger_price: Union[str, int, float] = 0,
     disclosed_quantity: Union[str, int, float] = 0
-) -> List[List[str]]:
+):
     """Place a smart order with position sizing.
     
     Args:
@@ -870,7 +920,7 @@ def oa_placesmartorder(
     return [["Order ID", str(order_id)]]
 
 @func
-def oa_basketorder(strategy: str, orders: List[List[Any]]) -> List[List[str]]:
+def oa_basketorder(strategy: str, orders: List[List[Any]]):
     """Place multiple orders in a basket.
     
     Args:
@@ -951,7 +1001,7 @@ def oa_splitorder(
     price: Union[str, int, float] = 0,
     trigger_price: Union[str, int, float] = 0,
     disclosed_quantity: Union[str, int, float] = 0
-) -> List[List[str]]:
+):
     """Place a split order (break large order into smaller chunks).
     
     Args:
@@ -1012,6 +1062,50 @@ def oa_splitorder(
         return [["Status", str(data)]]
 # Automation Scripts and Helper Functions
 @script
+def debug_xlwings_setup(book: xw.Book):
+    """Debug xlwings Lite setup and display diagnostic information"""
+    try:
+        sheet = book.sheets.active
+        
+        # Clear area for debug info
+        sheet.range("A1:C20").clear()
+        
+        # Header
+        sheet["A1"].value = "xlwings Lite Debug Information"
+        sheet["A1"].font.bold = True
+        
+        # Test basic xlwings
+        sheet["A3"].value = "Basic Test:"
+        sheet["B3"].value = test_xlwings()
+        
+        # Test imports
+        sheet["A5"].value = "Package Status:"
+        import_results = test_imports()
+        for i, row in enumerate(import_results):
+            sheet[f"A{6+i}"].value = row[0]
+            sheet[f"B{6+i}"].value = row[1]
+        
+        # Test config
+        config_row = 6 + len(import_results) + 2
+        sheet[f"A{config_row}"].value = "Configuration:"
+        config_results = test_config()
+        for i, row in enumerate(config_results):
+            sheet[f"A{config_row+1+i}"].value = row[0]
+            sheet[f"B{config_row+1+i}"].value = row[1]
+            
+        sheet[f"A{config_row+len(config_results)+2}"].value = f"Debug completed at {datetime.now().strftime('%H:%M:%S')}"
+        
+        # Instructions
+        inst_row = config_row + len(config_results) + 4
+        sheet[f"A{inst_row}"].value = "Next Steps:"
+        sheet[f"A{inst_row+1}"].value = "1. Try =test_xlwings() in a cell"
+        sheet[f"A{inst_row+2}"].value = "2. Try =oa_api('your_key') to configure"
+        sheet[f"A{inst_row+3}"].value = "3. Try =oa_quotes('RELIANCE','NSE') for data"
+        
+    except Exception as e:
+        sheet["A1"].value = f"Debug Error: {str(e)}"
+
+@script
 def refresh_all_quotes(book: xw.Book):
     """Refresh all quote formulas in the active sheet."""
     sheet = book.sheets.active
@@ -1071,7 +1165,7 @@ def setup_dashboard(book: xw.Book):
 
 # Testing Functions
 @func
-def oa_test_connection() -> List[List[str]]:
+def oa_test_connection():
     """Test connection to OpenAlgo API."""
     if not validate_api_key():
         return format_error("OpenAlgo API Key is not set. Use oa_api()")
@@ -1102,7 +1196,7 @@ def oa_test_connection() -> List[List[str]]:
         ]
 
 @func
-def oa_get_config() -> List[List[str]]:
+def oa_get_config():
     """Get current OpenAlgo configuration."""
     api_key_display = "***" + OpenAlgoConfig.api_key[-4:] if len(OpenAlgoConfig.api_key) > 4 else "Not Set"
     
