@@ -23,9 +23,14 @@ This is the xlwings Lite port of the OpenAlgo Excel Add-in, providing seamless i
 - **Smart Format Detection**: Automatically chooses optimal display format
 - **List/Dict Handling**: Seamlessly handles API format inconsistencies
 - **Field Prioritization**: Important fields (symbol, price, quantity) displayed first
-- **Price Formatting**: Automatic currency formatting (123.45)
-- **Timestamp Conversion**: Unix timestamps converted to readable dates
-- **User-Friendly Labels**: Technical field names become readable (ltp → Last Trade Price)
+- **Smart Value Formatting**: Context-aware formatting for different data types
+  - **Price Fields**: Currency formatting with 2 decimals (2,500.00)
+  - **Quantity Fields**: Integer formatting with thousands separators (10,000)
+  - **Currency Fields**: Large amount formatting (₹1,50,000.00)
+  - **Percentage Fields**: Automatic % suffix (5.25%)
+  - **Options Greeks**: High-precision formatting (0.1234)
+  - **Timestamps**: Readable date-time format (2024-06-22 14:30:00)
+- **Enhanced Field Mappings**: 90+ technical field names converted to user-friendly labels
 
 ### Configuration Functions
 - **`=oa_set_format("auto"|"table"|"key_value")`** - Set display preference
@@ -233,14 +238,49 @@ The new dynamic response system automatically:
 - **Consistent Display**: Professional formatting across all functions
 - **Better User Experience**: Readable field names and proper value formatting
 
-### Field Mappings
-Common technical field names are automatically converted:
+### Enhanced Field Mappings
+**90+ technical field names** automatically converted to user-friendly labels:
+
+#### Core Trading Fields:
 - `ltp` → `Last Trade Price`
 - `prev_close` → `Previous Close`
 - `pnl` → `P&L`
-- `pnl_percent` → `P&L %`
 - `orderid` → `Order ID`
 - `tradingsymbol` → `Trading Symbol`
+
+#### Account & Fund Fields:
+- `availablecash` → `Available Cash`
+- `m2mrealized` → `Realized M2M`
+- `m2munrealized` → `Unrealized M2M`
+- `utiliseddebits` → `Used Debits`
+- `collateral` → `Collateral Value`
+
+#### Order Management Fields:
+- `triggerprice` → `Trigger Price`
+- `averageprice` → `Average Price`
+- `remainingquantity` → `Remaining Qty`
+- `filledquantity` → `Filled Qty`
+- `order_status` → `Order Status`
+
+#### Market Data Fields:
+- `bid_price` → `Bid Price`
+- `ask_price` → `Ask Price`
+- `total_traded_volume` → `Total Volume`
+- `upper_circuit` → `Upper Circuit`
+- `day_high` → `Day High`
+
+#### Options Trading Fields:
+- `strikeprice` → `Strike Price`
+- `optiontype` → `Option Type`
+- `implied_volatility` → `IV`
+- `days_to_expiry` → `Days to Expiry`
+- Greeks: `delta`, `gamma`, `theta`, `vega`, `rho`
+
+#### Position & P&L Fields:
+- `unrealized_pnl` → `Unrealized P&L`
+- `net_quantity` → `Net Quantity`
+- `buy_value` → `Buy Value`
+- `margin_required` → `Margin Required`
 
 ## Error Handling & Debugging
 
@@ -430,3 +470,4 @@ This add-in is provided as-is. Test thoroughly in demo/paper trading mode before
 - 🐛 **Better Debugging**: Comprehensive request/response logging
 - 🌐 **CORS Guide**: Complete setup instructions for Excel Online compatibility
 - 📚 **Excel IntelliSense**: Professional function documentation with parameter hints and help links
+- 🏷️ **90+ Field Mappings**: Comprehensive technical field name conversion to user-friendly labels

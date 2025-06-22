@@ -71,16 +71,184 @@ class ResponseConfig:
     
     # Field mappings for better display names
     field_labels = {
+        # Core Trading Fields
         'ltp': 'Last Trade Price',
         'prev_close': 'Previous Close',
         'pnl': 'P&L',
         'pnl_percent': 'P&L %',
         'orderid': 'Order ID',
-        'tradingsymbol': 'Trading Symbol'
+        'tradingsymbol': 'Trading Symbol',
+        
+        # Account/Funds Fields
+        'availablecash': 'Available Cash',
+        'utiliseddebits': 'Used Debits',
+        'utilisedpayout': 'Used Payout',
+        'm2mrealized': 'Realized M2M',
+        'm2munrealized': 'Unrealized M2M',
+        'collateral': 'Collateral Value',
+        'payin': 'Pay In Amount',
+        'payout': 'Pay Out Amount',
+        'branchcode': 'Branch Code',
+        'clientcode': 'Client Code',
+        
+        # Order Management Fields
+        'triggerprice': 'Trigger Price',
+        'averageprice': 'Average Price',
+        'remainingquantity': 'Remaining Qty',
+        'filledquantity': 'Filled Qty',
+        'unfilledshares': 'Unfilled Qty',
+        'totalbuyquantity': 'Total Buy Qty',
+        'totalsellquantity': 'Total Sell Qty',
+        'pendingquantity': 'Pending Qty',
+        'rejectedquantity': 'Rejected Qty',
+        'cancelledquantity': 'Cancelled Qty',
+        'disclosed_quantity': 'Disclosed Qty',
+        'order_id': 'Order ID',
+        'parent_order_id': 'Parent Order ID',
+        'order_status': 'Order Status',
+        'order_type': 'Order Type',
+        'order_side': 'Order Side',
+        
+        # Market Data Fields
+        'bid_price': 'Bid Price',
+        'ask_price': 'Ask Price',
+        'bid_qty': 'Bid Quantity',
+        'ask_qty': 'Ask Quantity',
+        'bid_orders': 'Bid Orders',
+        'ask_orders': 'Ask Orders',
+        'volume': 'Volume',
+        'turnover': 'Turnover',
+        'last_price': 'Last Price',
+        'last_qty': 'Last Quantity',
+        'total_traded_volume': 'Total Volume',
+        'total_traded_value': 'Total Value',
+        'lower_circuit': 'Lower Circuit',
+        'upper_circuit': 'Upper Circuit',
+        'percent_change': 'Change %',
+        'price_change': 'Price Change',
+        'day_high': 'Day High',
+        'day_low': 'Day Low',
+        'year_high': '52W High',
+        'year_low': '52W Low',
+        
+        # OHLC Fields
+        'open': 'Open',
+        'high': 'High',
+        'low': 'Low',
+        'close': 'Close',
+        'prev_open': 'Prev Open',
+        'prev_high': 'Prev High',
+        'prev_low': 'Prev Low',
+        
+        # Options Trading Fields
+        'strikeprice': 'Strike Price',
+        'strike_price': 'Strike Price',
+        'optiontype': 'Option Type',
+        'option_type': 'Option Type',
+        'expiry': 'Expiry Date',
+        'expiry_date': 'Expiry Date',
+        'days_to_expiry': 'Days to Expiry',
+        'underlying': 'Underlying',
+        'underlying_price': 'Underlying Price',
+        'implied_volatility': 'IV',
+        'delta': 'Delta',
+        'gamma': 'Gamma',
+        'theta': 'Theta',
+        'vega': 'Vega',
+        'rho': 'Rho',
+        
+        # Position Fields
+        'net_quantity': 'Net Quantity',
+        'buy_quantity': 'Buy Quantity',
+        'sell_quantity': 'Sell Quantity',
+        'buy_value': 'Buy Value',
+        'sell_value': 'Sell Value',
+        'buy_price': 'Buy Price',
+        'sell_price': 'Sell Price',
+        'unrealized_pnl': 'Unrealized P&L',
+        'realized_pnl': 'Realized P&L',
+        'mtm': 'Mark to Market',
+        'day_pnl': 'Day P&L',
+        'day_change': 'Day Change',
+        'day_change_percent': 'Day Change %',
+        
+        # Exchange and Instrument Fields
+        'exchange': 'Exchange',
+        'segment': 'Segment',
+        'instrument': 'Instrument',
+        'instrument_type': 'Instrument Type',
+        'lot_size': 'Lot Size',
+        'tick_size': 'Tick Size',
+        'isin': 'ISIN',
+        'symbol': 'Symbol',
+        'token': 'Token',
+        'exchange_token': 'Exchange Token',
+        
+        # Time Fields
+        'timestamp': 'Timestamp',
+        'order_time': 'Order Time',
+        'update_time': 'Update Time',
+        'trade_time': 'Trade Time',
+        'last_update_time': 'Last Update',
+        'market_open_time': 'Market Open',
+        'market_close_time': 'Market Close',
+        
+        # Status and Message Fields
+        'status': 'Status',
+        'message': 'Message',
+        'error_code': 'Error Code',
+        'error_message': 'Error Message',
+        'rejection_reason': 'Rejection Reason',
+        'validity': 'Validity',
+        'product': 'Product',
+        'strategy': 'Strategy',
+        'tag': 'Tag',
+        
+        # Broker and Account Fields
+        'broker': 'Broker',
+        'account_id': 'Account ID',
+        'user_id': 'User ID',
+        'client_id': 'Client ID',
+        'broker_order_id': 'Broker Order ID',
+        'exchange_order_id': 'Exchange Order ID',
+        
+        # Additional Trading Fields
+        'multiplier': 'Multiplier',
+        'margin_required': 'Margin Required',
+        'margin_blocked': 'Margin Blocked',
+        'margin_available': 'Margin Available',
+        'exposure': 'Exposure',
+        'span_margin': 'SPAN Margin',
+        'elm_margin': 'ELM Margin',
+        'var_margin': 'VAR Margin'
     }
     
     # Fields to prioritize in display order
-    priority_fields = ['symbol', 'ltp', 'price', 'quantity', 'status', 'orderid']
+    priority_fields = [
+        # Core identification fields (highest priority)
+        'symbol', 'tradingsymbol', 'orderid', 'order_id',
+        
+        # Key price fields
+        'ltp', 'last_price', 'price', 'averageprice', 'triggerprice',
+        
+        # Quantity fields
+        'quantity', 'remainingquantity', 'filledquantity', 'net_quantity',
+        
+        # Status and action fields
+        'status', 'order_status', 'action', 'order_side',
+        
+        # P&L and account fields
+        'pnl', 'unrealized_pnl', 'realized_pnl', 'availablecash',
+        
+        # Market data fields
+        'bid_price', 'ask_price', 'volume', 'turnover',
+        
+        # Time fields
+        'timestamp', 'order_time', 'expiry',
+        
+        # Exchange and product
+        'exchange', 'product', 'instrument_type'
+    ]
     
     # Endpoints with known response patterns
     endpoint_schemas = {
@@ -263,26 +431,110 @@ def smart_format_value(key, value):
         return ""
     
     # Handle timestamps
-    if key.lower() in ['timestamp', 'date', 'time'] and isinstance(value, (int, float)):
+    timestamp_fields = [
+        'timestamp', 'date', 'time', 'order_time', 'update_time', 
+        'trade_time', 'last_update_time', 'market_open_time', 
+        'market_close_time', 'expiry_date'
+    ]
+    if key.lower() in timestamp_fields and isinstance(value, (int, float)):
         try:
             dt = datetime.fromtimestamp(value)
             return dt.strftime(ResponseConfig.timestamp_format)
         except (ValueError, TypeError, OSError):
             pass
     
-    # Handle numeric formatting
-    if key.lower() in ['price', 'ltp', 'high', 'low', 'open', 'close', 'trigger_price']:
+    # Handle date strings (YYYY-MM-DD format)
+    if key.lower() in ['expiry', 'expiry_date'] and isinstance(value, str):
+        try:
+            # Try to parse different date formats
+            if len(value) == 10 and value.count('-') == 2:  # YYYY-MM-DD
+                return value
+            elif len(value) == 8 and value.isdigit():  # YYYYMMDD
+                return f"{value[:4]}-{value[4:6]}-{value[6:8]}"
+        except (ValueError, TypeError):
+            pass
+    
+    # Handle price formatting (2 decimal places)
+    price_fields = [
+        'price', 'ltp', 'high', 'low', 'open', 'close', 'trigger_price',
+        'triggerprice', 'averageprice', 'last_price', 'prev_close',
+        'bid_price', 'ask_price', 'buy_price', 'sell_price',
+        'strikeprice', 'strike_price', 'underlying_price',
+        'day_high', 'day_low', 'year_high', 'year_low',
+        'prev_open', 'prev_high', 'prev_low', 'upper_circuit', 'lower_circuit',
+        'price_change', 'day_change'
+    ]
+    if key.lower() in price_fields:
         try:
             num_val = float(value)
             return f"{num_val:.2f}" if num_val != 0 else "0.00"
         except (ValueError, TypeError):
             pass
     
+    # Handle currency/value formatting (2 decimal places)
+    currency_fields = [
+        'availablecash', 'utiliseddebits', 'utilisedpayout', 
+        'collateral', 'payin', 'payout', 'turnover',
+        'buy_value', 'sell_value', 'total_traded_value',
+        'margin_required', 'margin_blocked', 'margin_available',
+        'span_margin', 'elm_margin', 'var_margin', 'exposure'
+    ]
+    if key.lower() in currency_fields:
+        try:
+            num_val = float(value)
+            if num_val >= 10000:  # Add thousands separator for large amounts
+                return f"{num_val:,.2f}"
+            else:
+                return f"{num_val:.2f}" if num_val != 0 else "0.00"
+        except (ValueError, TypeError):
+            pass
+    
+    # Handle quantity formatting (no decimals)
+    quantity_fields = [
+        'quantity', 'remainingquantity', 'filledquantity', 'unfilledshares',
+        'totalbuyquantity', 'totalsellquantity', 'pendingquantity',
+        'rejectedquantity', 'cancelledquantity', 'disclosed_quantity',
+        'bid_qty', 'ask_qty', 'last_qty', 'volume', 'total_traded_volume',
+        'net_quantity', 'buy_quantity', 'sell_quantity', 'lot_size'
+    ]
+    if key.lower() in quantity_fields:
+        try:
+            num_val = int(float(value))
+            if num_val >= 1000:  # Add thousands separator for large quantities
+                return f"{num_val:,}"
+            else:
+                return str(num_val)
+        except (ValueError, TypeError):
+            pass
+    
     # Handle percentage fields
-    if 'percent' in key.lower() or key.lower().endswith('_pct'):
+    percentage_fields = [
+        'pnl_percent', 'percent_change', 'day_change_percent',
+        'change_percent', 'implied_volatility'
+    ]
+    if ('percent' in key.lower() or key.lower().endswith('_pct') or 
+        key.lower() in percentage_fields):
         try:
             num_val = float(value)
             return f"{num_val:.2f}%"
+        except (ValueError, TypeError):
+            pass
+    
+    # Handle Greek values (options)
+    greek_fields = ['delta', 'gamma', 'theta', 'vega', 'rho']
+    if key.lower() in greek_fields:
+        try:
+            num_val = float(value)
+            return f"{num_val:.4f}"  # Higher precision for Greeks
+        except (ValueError, TypeError):
+            pass
+    
+    # Handle special integer fields
+    special_int_fields = ['days_to_expiry', 'bid_orders', 'ask_orders', 'multiplier']
+    if key.lower() in special_int_fields:
+        try:
+            num_val = int(float(value))
+            return str(num_val)
         except (ValueError, TypeError):
             pass
     
